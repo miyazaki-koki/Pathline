@@ -1,0 +1,408 @@
+name: Claude Code Fix
+
+on:
+  # PRへのコメント（@claudeメンション対応）
+  issue_comment:
+    types: [created]
+  # PRのインラインコメント・レビューコメント
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude-fix:
+    # PRへのコメントで @claude がメンションされた場合のみ実行
+    if: |
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber, prHeadRef, prHeadSha;
+
+            if (context.eventName === 'issue_comment') {
+              // issue_comment の場合はPR情報を取得
+              const pr = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number
+              });
+              prNumber = context.issue.number;
+              prHeadRef = pr.data.head.ref;
+              prHeadSha = pr.data.head.sha;
+            } else {
+              // pull_request_review_comment の場合
+              prNumber = context.payload.pull_request.number;
+              prHeadRef = context.payload.pull_request.head.ref;
+              prHeadSha = context.payload.pull_request.head.sha;
+            }
+
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('head_ref', prHeadRef);
+            core.setOutput('head_sha', prHeadSha);
+
+            console.log(`PR Number: ${prNumber}`);
+            console.log(`Head Ref: ${prHeadRef}`);
+            console.log(`Head SHA: ${prHeadSha}`);
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-info.outputs.head_ref }}
+          fetch-depth: 0
+
+      - name: Add reaction to comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            if (context.eventName === 'issue_comment') {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'eyes'
+              });
+            } else if (context.eventName === 'pull_request_review_comment') {
+              await github.rest.reactions.createForPullRequestReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'eyes'
+              });
+            }
+
+      - name: Create MCP config
+        run: |
+          cat > /tmp/mcp-config.json << 'MCPEOF'
+          {
+            "mcpServers": {
+              "context7": {
+                "command": "npx",
+                "args": ["-y", "@upstash/context7-mcp"]
+              }
+            }
+          }
+          MCPEOF
+        env:
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+
+      # TODO: Add project-specific MCP configurations here
+      # Example: Supabase, database tools, project-specific APIs, etc.
+      # Uncomment and configure as needed for your project
+
+      - name: Build context for issue comment thread
+        id: build-issue-context
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.issue.number;
+
+            // PRの全コメントを取得
+            const allComments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100
+            });
+
+            // 現在のコメントより前のコメントを取得（直近10件）
+            const currentCommentIndex = allComments.data.findIndex(c => c.id === context.payload.comment.id);
+            const recentComments = allComments.data.slice(Math.max(0, currentCommentIndex - 10), currentCommentIndex + 1);
+
+            let contextInfo = '';
+            if (recentComments.length > 1) {
+              contextInfo = `
+            ## PRコメント履歴（直近のコメント）
+            `;
+              for (const tc of recentComments) {
+                const isCurrentComment = tc.id === context.payload.comment.id;
+                const marker = isCurrentComment ? '👉 ' : '';
+                contextInfo += `
+            ### ${marker}@${tc.user.login} (${new Date(tc.created_at).toISOString()})
+            ${tc.body}
+            `;
+              }
+
+              contextInfo += `
+            ---
+            **注意**: 👉 マークが今回 @claude でメンションされたコメントです。
+            コメント履歴の文脈を理解した上で、指示に従って対応してください。
+            `;
+            }
+
+            core.setOutput('context_info', contextInfo);
+
+      - name: Build context for inline comment
+        id: build-context
+        if: github.event_name == 'pull_request_review_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment;
+            const filePath = comment.path;
+            const line = comment.line || comment.original_line;
+            const diffHunk = comment.diff_hunk;
+            const prNumber = context.payload.pull_request.number;
+
+            // 親コメント（スレッドの元コメント）を取得
+            let parentComment = null;
+            let threadComments = [];
+
+            if (comment.in_reply_to_id) {
+              // 返信コメントの場合、PRの全コメントを取得してスレッドを構築
+              const allComments = await github.rest.pulls.listReviewComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                per_page: 100
+              });
+
+              // 親コメントを見つける
+              parentComment = allComments.data.find(c => c.id === comment.in_reply_to_id);
+
+              if (parentComment) {
+                // スレッド内の全コメントを取得（親コメントへの返信）
+                threadComments = allComments.data.filter(c =>
+                  c.in_reply_to_id === parentComment.id || c.id === parentComment.id
+                ).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+              }
+            }
+
+            // コンテキスト情報を構築
+            let contextInfo = `
+            ## コメント位置情報
+            - ファイル: ${filePath}
+            - 行番号: ${line}
+            - Diff:
+            \`\`\`diff
+            ${diffHunk}
+            \`\`\`
+            `;
+
+            // 親コメントがある場合はスレッド全体を追加
+            if (parentComment) {
+              contextInfo += `
+            ## コメントスレッド（元のレビューコメントと返信）
+            `;
+              for (const tc of threadComments) {
+                const isCurrentComment = tc.id === comment.id;
+                const marker = isCurrentComment ? '👉 ' : '';
+                contextInfo += `
+            ### ${marker}@${tc.user.login} (${new Date(tc.created_at).toISOString()})
+            ${tc.body}
+            `;
+              }
+
+              contextInfo += `
+            ---
+            **注意**: 上記スレッドの最初のコメントが元のレビュー指摘です。👉 マークが今回 @claude でメンションされたコメントです。
+            スレッド全体の文脈を理解した上で、指示に従って修正してください。
+            `;
+            }
+
+            core.setOutput('context_info', contextInfo);
+            core.setOutput('file_path', filePath);
+            core.setOutput('line_number', line);
+            core.setOutput('has_parent', parentComment ? 'true' : 'false');
+
+      - name: Run Claude Code Fix
+        id: claude-fix
+        uses: anthropics/claude-code-action@v1
+        env:
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            ## タスク: レビューコメントに基づくコード修正
+
+            以下のレビューコメントに従ってコードを修正してください。
+
+            ### コメント内容
+            ${{ github.event.comment.body }}
+
+            ### コメント投稿者
+            ${{ github.event.comment.user.login }}
+
+            ${{ github.event_name == 'pull_request_review_comment' && steps.build-context.outputs.context_info || '' }}
+            ${{ github.event_name == 'issue_comment' && steps.build-issue-context.outputs.context_info || '' }}
+
+            ### 修正ガイドライン
+
+            1. **コメントの意図を理解する**
+               - コメントが指摘している問題を正確に把握
+               - 修正範囲を最小限に抑える
+
+            2. **修正を実施**
+               - 指摘された問題を修正
+               - 関連する箇所があれば一緒に修正
+               - テストが必要な場合は追加・更新
+
+            3. **品質チェック**
+               - 修正がプロジェクトの規約（CLAUDE.md、.kiro/steering/）に従っているか確認
+               - TypeScriptの型エラーがないか確認
+               - リンターエラーがないか確認
+
+            4. **変更をコミット**
+               - 修正が完了したら、以下の形式でコミットしてください：
+               ```
+               fix: [修正内容の簡潔な説明]
+
+               Addresses review comment by @${{ github.event.comment.user.login }}
+
+               Co-Authored-By: Claude <noreply@anthropic.com>
+               ```
+               - `git push` で変更をプッシュ
+
+            5. **完了報告**
+               - 修正完了後、`gh pr comment` でPRにコメントを残してください
+               - 何を修正したか、修正の理由を簡潔に説明
+
+            ### 注意事項
+            - `@claude` 以降のテキストが指示内容です
+            - 不明確な指示の場合は、PRにコメントで質問してください
+            - 修正に自信がない場合は、提案として返信してください
+            - 破壊的な変更や大規模なリファクタリングは避けてください
+
+            ### Git操作の厳守事項（違反禁止）
+            - `git push --force`, `git push -f`, `git push --force-with-lease` は絶対に使用禁止
+            - `git commit --amend` は使用禁止（常に新しいコミットを作成）
+            - `git reset --hard` は使用禁止
+            - `git rebase` は使用禁止
+            - main/master/develop ブランチへの直接プッシュは禁止
+
+          claude_args: '--mcp-config /tmp/mcp-config.json --allowed-tools "Bash(git status),Bash(git add:*),Bash(git commit -m:*),Bash(git push origin HEAD),Bash(git diff:*),Bash(gh pr comment:*),Bash(gh pr view:*),mcp__context7__*"'
+
+      - name: Add success reaction
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Remove eyes reaction and add rocket
+            const isIssueComment = context.eventName === 'issue_comment';
+
+            try {
+              let reactions;
+              if (isIssueComment) {
+                reactions = await github.rest.reactions.listForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: context.payload.comment.id
+                });
+              } else {
+                reactions = await github.rest.reactions.listForPullRequestReviewComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: context.payload.comment.id
+                });
+              }
+
+              const eyesReaction = reactions.data.find(r => r.content === 'eyes' && r.user.login === 'github-actions[bot]');
+              if (eyesReaction) {
+                if (isIssueComment) {
+                  await github.rest.reactions.deleteForIssueComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: context.payload.comment.id,
+                    reaction_id: eyesReaction.id
+                  });
+                } else {
+                  await github.rest.reactions.deleteForPullRequestReviewComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: context.payload.comment.id,
+                    reaction_id: eyesReaction.id
+                  });
+                }
+              }
+            } catch (e) {
+              console.log('Could not remove eyes reaction:', e.message);
+            }
+
+            if (isIssueComment) {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'rocket'
+              });
+            } else {
+              await github.rest.reactions.createForPullRequestReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'rocket'
+              });
+            }
+
+      - name: Add failure reaction
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Remove eyes reaction and add confused
+            const isIssueComment = context.eventName === 'issue_comment';
+
+            try {
+              let reactions;
+              if (isIssueComment) {
+                reactions = await github.rest.reactions.listForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: context.payload.comment.id
+                });
+              } else {
+                reactions = await github.rest.reactions.listForPullRequestReviewComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: context.payload.comment.id
+                });
+              }
+
+              const eyesReaction = reactions.data.find(r => r.content === 'eyes' && r.user.login === 'github-actions[bot]');
+              if (eyesReaction) {
+                if (isIssueComment) {
+                  await github.rest.reactions.deleteForIssueComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: context.payload.comment.id,
+                    reaction_id: eyesReaction.id
+                  });
+                } else {
+                  await github.rest.reactions.deleteForPullRequestReviewComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: context.payload.comment.id,
+                    reaction_id: eyesReaction.id
+                  });
+                }
+              }
+            } catch (e) {
+              console.log('Could not remove eyes reaction:', e.message);
+            }
+
+            if (isIssueComment) {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'confused'
+              });
+            } else {
+              await github.rest.reactions.createForPullRequestReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'confused'
+              });
+            }
