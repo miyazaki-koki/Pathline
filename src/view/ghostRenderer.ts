@@ -65,14 +65,26 @@ function createOverlay(target: InputTarget): HTMLElement {
 
   el.appendChild(head);
   el.appendChild(body);
-  positionOverlay(el, target.element);
   document.body.appendChild(el);
+  positionOverlay(el, target.element);
   return el;
 }
 
+const GAP = 6;
+
 function positionOverlay(overlay: HTMLElement, host: HTMLElement): void {
   const rect = host.getBoundingClientRect();
-  overlay.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  const overlayHeight = overlay.offsetHeight || 120;
+  const viewportH = window.innerHeight;
+  const spaceBelow = viewportH - rect.bottom;
+  const spaceAbove = rect.top;
+  const placeAbove = spaceBelow < overlayHeight + GAP && spaceAbove > spaceBelow;
+
+  const top = placeAbove
+    ? rect.top + window.scrollY - overlayHeight - GAP
+    : rect.bottom + window.scrollY + GAP;
+
+  overlay.style.top = `${top}px`;
   overlay.style.left = `${rect.left + window.scrollX}px`;
   overlay.style.width = `${Math.max(rect.width, 280)}px`;
 }
@@ -106,6 +118,9 @@ export function createGhostRenderer(): GhostRenderer {
       writeTarget.textContent = candidate.body;
       const catEl = node.querySelector<HTMLElement>(".pl-ghost-cat");
       if (catEl) catEl.textContent = candidate.category;
+      if (target.kind === "textarea" || target.kind === "contenteditable") {
+        positionOverlay(node, target.element);
+      }
       states.set(target.element, { node, hash: candidate.hash });
     },
     hide(target): void {
