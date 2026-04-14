@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pathline Test Page</title>
+    <style>
+      body { font: 14px/1.6 system-ui; max-width: 720px; margin: 40px auto; padding: 0 20px; color: #1a1d24; }
+      h1 { font-size: 22px; }
+      h2 { font-size: 14px; margin-top: 28px; color: #475569; }
+      textarea, .ce { width: 100%; min-height: 96px; padding: 12px; font: 14px/1.5 inherit; border: 1px solid #cbd5e1; border-radius: 8px; background: white; box-sizing: border-box; }
+      .ce { white-space: pre-wrap; outline: none; }
+      .ce:focus, textarea:focus { border-color: #6366f1; }
+      .status { margin-top: 24px; padding: 12px; background: #f1f5f9; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 12px; }
+      .ok { color: #059669; }
+      .ng { color: #dc2626; }
+    </style>
+  </head>
+  <body>
+    <h1>Pathline 動作確認ページ</h1>
+    <p>4 文字以上入力すると 150ms 後にゴーストが直下に出るはず。Tab で確定 / ↑↓ で切替 / Esc で閉じる。</p>
+
+    <h2>1. textarea</h2>
+    <textarea placeholder="例: いい感じに直して"></textarea>
+
+    <h2>2. contenteditable div</h2>
+    <div class="ce" contenteditable="true" data-placeholder="例: これを要約して"></div>
+
+    <h2>3. password (除外確認)</h2>
+    <input type="password" placeholder="ここではゴースト出ないはず" style="width:100%;padding:12px;font:14px inherit;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;" />
+
+    <div class="status" id="status">
+      Loading 状態確認中...
+    </div>
+
+    <script>
+      const s = document.getElementById("status");
+      function check() {
+        const lines = [];
+        lines.push("readyState: " + document.readyState);
+        const active = document.documentElement.getAttribute("data-pathline") === "active";
+        lines.push("Pathline active: " + (active ? "✅ YES" : "❌ NO (content script が注入されていない)"));
+        const attached = document.querySelectorAll("[data-pl-attached]");
+        lines.push("Attached inputs: " + attached.length);
+        const overlays = document.querySelectorAll(".pl-ghost-overlay");
+        lines.push("Visible ghosts: " + overlays.length);
+        s.textContent = lines.join("\n");
+      }
+      setInterval(check, 500);
+      check();
+    </script>
+  </body>
+</html>

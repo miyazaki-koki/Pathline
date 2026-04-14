@@ -59,10 +59,18 @@ export function createInputTarget(el: HTMLElement): InputTarget {
     setText,
     focus: () => el.focus(),
     onInput(listener) {
-      return subscribe<Event>("input", () => {
-        if (composing) return;
+      const inputDisp = subscribe<Event>("input", () => {
         listener(getText());
       });
+      const endDisp = subscribe<CompositionEvent>("compositionend", () => {
+        listener(getText());
+      });
+      return {
+        dispose: () => {
+          inputDisp.dispose();
+          endDisp.dispose();
+        },
+      };
     },
     onBlur(listener) {
       return subscribe<FocusEvent>("blur", () => listener());

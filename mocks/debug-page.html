@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pathline Debug</title>
+    <style>
+      body { font: 14px/1.6 system-ui; max-width: 800px; margin: 30px auto; padding: 0 20px; }
+      textarea { width: 100%; min-height: 100px; padding: 12px; font: 14px/1.5 inherit; border: 2px solid #6366f1; border-radius: 8px; box-sizing: border-box; }
+      .log { margin-top: 20px; padding: 12px; background: #0f172a; color: #a5f3fc; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 11px; max-height: 320px; overflow: auto; white-space: pre-wrap; }
+      .ok { color: #4ade80; }
+      .ng { color: #f87171; }
+      .info { color: #fbbf24; }
+    </style>
+  </head>
+  <body>
+    <h2>Pathline Debug</h2>
+    <p>下の textarea に <b>「いい感じに直して」</b> や <b>「これを要約して」</b> を入れてください (4文字以上)。</p>
+    <textarea id="ta" placeholder="ここに 4 文字以上入力してください..."></textarea>
+    <div class="log" id="log"></div>
+
+    <script>
+      const log = document.getElementById("log");
+      const ta = document.getElementById("ta");
+
+      function add(msg, cls) {
+        const t = new Date().toISOString().slice(11, 23);
+        const line = document.createElement("div");
+        if (cls) line.className = cls;
+        line.textContent = `[${t}] ${msg}`;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function snapshot() {
+        const active = document.documentElement.getAttribute("data-pathline");
+        const attached = document.querySelectorAll("[data-pl-attached]").length;
+        const overlays = document.querySelectorAll(".pl-ghost-overlay").length;
+        return { active, attached, overlays };
+      }
+
+      // initial check
+      setTimeout(() => {
+        const s = snapshot();
+        add(`pathline=${s.active} attached=${s.attached} overlays=${s.overlays}`,
+            s.active === "active" ? "ok" : "ng");
+        if (s.active !== "active") add("→ content script が注入されていません", "ng");
+        if (s.attached === 0) add("→ DomWatcher が textarea を attach できていません", "ng");
+      }, 500);
+
+      // monitor input
+      ta.addEventListener("input", () => {
+        const s = snapshot();
+        add(`input "${ta.value}" → attached=${s.attached} overlays=${s.overlays}`, "info");
+      });
+
+      // poll for overlay appearance
+      let lastOverlays = 0;
+      setInterval(() => {
+        const n = document.querySelectorAll(".pl-ghost-overlay").length;
+        if (n !== lastOverlays) {
+          add(`overlay count changed: ${lastOverlays} → ${n}`,
+              n > 0 ? "ok" : "info");
+          lastOverlays = n;
+          if (n > 0) {
+            const ov = document.querySelector(".pl-ghost-overlay");
+            const r = ov.getBoundingClientRect();
+            add(`overlay rect: top=${r.top.toFixed(0)} left=${r.left.toFixed(0)} w=${r.width.toFixed(0)} h=${r.height.toFixed(0)} display=${getComputedStyle(ov).display} visibility=${getComputedStyle(ov).visibility} opacity=${getComputedStyle(ov).opacity}`, "info");
+          }
+        }
+      }, 200);
+    </script>
+  </body>
+</html>

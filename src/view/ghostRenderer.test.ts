@@ -23,7 +23,7 @@ describe("GhostRenderer (textarea overlay)", () => {
     r.render(t, candidate("hello"));
     const overlay = document.querySelector(".pl-ghost-overlay");
     expect(overlay).not.toBeNull();
-    expect(overlay?.textContent).toBe("hello");
+    expect(overlay?.querySelector(".pl-ghost-body")?.textContent).toBe("hello");
     expect(overlay?.getAttribute("aria-hidden")).toBe("true");
   });
 
@@ -40,12 +40,13 @@ describe("GhostRenderer (textarea overlay)", () => {
     const r = createGhostRenderer();
     const t = createInputTarget(ta);
     r.render(t, candidate("<script>x</script>"));
-    const overlay = document.querySelector(".pl-ghost-overlay");
-    expect(overlay?.querySelector("script")).toBeNull();
+    const body = document.querySelector(".pl-ghost-overlay .pl-ghost-body");
+    expect(body?.querySelector("script")).toBeNull();
+    expect(body?.textContent).toBe("<script>x</script>");
   });
 });
 
-describe("GhostRenderer (contenteditable inline)", () => {
+describe("GhostRenderer (contenteditable は overlay 統一)", () => {
   let div: HTMLDivElement;
   beforeEach(() => {
     document.body.innerHTML = "";
@@ -54,21 +55,22 @@ describe("GhostRenderer (contenteditable inline)", () => {
     document.body.appendChild(div);
   });
 
-  it("render で ghost span が末尾に 1 つ挿入される", () => {
+  it("render で overlay が body に追加され、host textContent は汚染されない", () => {
     const r = createGhostRenderer();
     const t = createInputTarget(div);
-    r.render(t, candidate("hi"));
-    const spans = div.querySelectorAll("span.pl-ghost-inline");
-    expect(spans.length).toBe(1);
-    expect(spans[0]?.getAttribute("contenteditable")).toBe("false");
+    div.textContent = "user text";
+    r.render(t, candidate("ghost body"));
+    expect(document.querySelector(".pl-ghost-overlay")).not.toBeNull();
+    expect(div.textContent).toBe("user text");
+    expect(div.querySelector(".pl-ghost-overlay")).toBeNull();
   });
 
-  it("hide で ghost span が除去される", () => {
+  it("hide で overlay が除去される", () => {
     const r = createGhostRenderer();
     const t = createInputTarget(div);
     r.render(t, candidate("hi"));
     r.hide(t);
-    expect(div.querySelector("span.pl-ghost-inline")).toBeNull();
+    expect(document.querySelector(".pl-ghost-overlay")).toBeNull();
   });
 });
 
@@ -94,6 +96,6 @@ describe("GhostRenderer (dirty check)", () => {
     const t = createInputTarget(ta);
     r.render(t, candidate("a", "H1"));
     r.render(t, candidate("b", "H2"));
-    expect(document.querySelector(".pl-ghost-overlay")?.textContent).toBe("b");
+    expect(document.querySelector(".pl-ghost-overlay .pl-ghost-body")?.textContent).toBe("b");
   });
 });

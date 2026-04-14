@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>Pathline Ghost Preview Mocks</title>
+    <style>
+      :root {
+        --bg: #f7f8fb;
+        --ink: #1a1d24;
+        --muted: #6b7280;
+        --accent: #6366f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--bg);
+        color: var(--ink);
+        font: 14px/1.6 -apple-system, "Segoe UI", system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      .lead {
+        color: var(--muted);
+        margin-bottom: 32px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        gap: 32px;
+      }
+      .case {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      .case h2 {
+        font-size: 14px;
+        margin: 0 0 4px;
+        letter-spacing: 0.02em;
+      }
+      .case p {
+        margin: 0 0 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .stage {
+        position: relative;
+        padding-bottom: 12px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 72px;
+        padding: 10px 12px;
+        font: 14px/1.5 inherit;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        resize: vertical;
+        background: white;
+      }
+      textarea:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: -1px;
+      }
+
+      /* ============ Variant A: Tooltip card (現状) ============ */
+      .vA-ghost {
+        margin-top: 6px;
+        padding: 10px 12px;
+        background: rgba(245, 245, 250, 0.96);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        font-size: 12px;
+        color: #333;
+      }
+      .vA-hint {
+        font-size: 10px;
+        color: #667;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .vA-body {
+        white-space: pre-wrap;
+      }
+
+      /* ============ Variant B: Floating chip + expand ============ */
+      .vB-chip {
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px 6px 12px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 999px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        font-size: 12px;
+        color: var(--ink);
+      }
+      .vB-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .vB-cat {
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+      }
+      .vB-preview {
+        max-width: 280px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--muted);
+      }
+      .vB-keys {
+        display: inline-flex;
+        gap: 4px;
+        margin-left: 6px;
+      }
+      .vB-key {
+        font-family: ui-monospace, "SF Mono", monospace;
+        font-size: 10px;
+        padding: 2px 6px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        color: #475569;
+      }
+
+      /* ============ Variant C: Inline diff (slate panel) ============ */
+      .vC-panel {
+        margin-top: 8px;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+        font-size: 12px;
+      }
+      .vC-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+      }
+      .vC-cat {
+        font-weight: 600;
+        color: #a5b4fc;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10px;
+      }
+      .vC-keys {
+        display: flex;
+        gap: 6px;
+        font-size: 10px;
+        color: #94a3b8;
+      }
+      .vC-keys kbd {
+        font-family: ui-monospace, monospace;
+        background: #0f172a;
+        border: 1px solid #334155;
+        padding: 1px 5px;
+        border-radius: 3px;
+      }
+      .vC-body {
+        padding: 12px;
+        white-space: pre-wrap;
+        line-height: 1.55;
+      }
+
+      /* ============ Variant D: Side rail (left accent bar) ============ */
+      .vD-rail {
+        margin-top: 8px;
+        display: flex;
+        background: #fafafa;
+        border: 1px solid #e5e7eb;
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .vD-side {
+        padding: 10px 12px;
+        background: rgba(99, 102, 241, 0.06);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        display: flex;
+        align-items: center;
+      }
+      .vD-content {
+        flex: 1;
+        padding: 10px 14px;
+      }
+      .vD-body {
+        white-space: pre-wrap;
+        color: #1f2937;
+        font-size: 13px;
+      }
+      .vD-foot {
+        margin-top: 8px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .vD-foot kbd {
+        font-family: ui-monospace, monospace;
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 10px;
+      }
+
+      /* dark variants */
+      .dark .case {
+        background: #111827;
+        border-color: #1f2937;
+        color: #e5e7eb;
+      }
+      .dark .case h2 {
+        color: #e5e7eb;
+      }
+      .dark textarea {
+        background: #0f172a;
+        color: #e5e7eb;
+        border-color: #334155;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pathline ゴーストプレビュー — デザイン候補</h1>
+    <p class="lead">
+      4 案を比較。textarea に「いい感じに直して」と仮入力済み・直下に候補プレビュー。<br />
+      気に入った案の番号 (A/B/C/D) を伝えてください。スタイルやコピーの修正もOK。
+    </p>
+
+    <div class="grid">
+      <!-- A: 現状の Tooltip card -->
+      <div class="case">
+        <h2>A. Tooltip Card (現状)</h2>
+        <p>下に薄い枠付きカード。情報量多い。textarea 幅に追従。</p>
+        <div class="stage">
+          <textarea>いい感じに直して</textarea>
+          <div class="vA-ghost">
+            <div class="vA-hint">PATHLINE · TAB · ↑↓ · ESC</div>
+            <div class="vA-body">以下の文章を分かりやすく自然な表現に改善してください。
+---
+いい感じに直して
+---</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B: Floating chip -->
+      <div class="case">
+        <h2>B. Floating Chip</h2>
+        <p>1 行のチップ。ノイズ最小。詳細はプレビュー省略。</p>
+        <div class="stage">
+          <textarea>いい感じに直して</textarea>
+          <div class="vB-chip">
+            <span class="vB-dot"></span>
+            <span class="vB-cat">Improve</span>
+            <span class="vB-preview">以下の文章を分かりやすく自然な…</span>
+            <span class="vB-keys">
+              <span class="vB-key">Tab</span>
+              <span class="vB-key">↑↓</span>
+              <span class="vB-key">Esc</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- C: Slate panel -->
+      <div class="case">
+        <h2>C. Slate Panel (dark)</h2>
+        <p>濃色パネル。ヘッダーにカテゴリ + キーバインド。視認性高い。</p>
+        <div class="stage">
+          <textarea>いい感じに直して</textarea>
+          <div class="vC-panel">
+            <div class="vC-head">
+              <span class="vC-cat">Improve</span>
+              <span class="vC-keys">
+                <kbd>Tab</kbd>
+                <kbd>↑↓</kbd>
+                <kbd>Esc</kbd>
+              </span>
+            </div>
+            <div class="vC-body">以下の文章を分かりやすく自然な表現に改善してください。
+---
+いい感じに直して
+---</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D: Side rail -->
+      <div class="case">
+        <h2>D. Side Rail</h2>
+        <p>左に細いアクセント帯 + 縦書きカテゴリ。控えめだが識別性あり。</p>
+        <div class="stage">
+          <textarea>いい感じに直して</textarea>
+          <div class="vD-rail">
+            <div class="vD-side">Improve</div>
+            <div class="vD-content">
+              <div class="vD-body">以下の文章を分かりやすく自然な表現に改善してください。
+---
+いい感じに直して
+---</div>
+              <div class="vD-foot">
+                <kbd>Tab</kbd> 確定 ・ <kbd>↑↓</kbd> 切替 ・ <kbd>Esc</kbd> 閉じる
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

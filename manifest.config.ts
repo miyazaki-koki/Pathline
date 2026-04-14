@@ -9,7 +9,7 @@ export default defineManifest({
   host_permissions: ["<all_urls>"],
   content_scripts: [
     {
-      matches: ["<all_urls>"],
+      matches: ["<all_urls>", "file:///*"],
       js: ["src/content/index.ts"],
       run_at: "document_idle",
       all_frames: false,

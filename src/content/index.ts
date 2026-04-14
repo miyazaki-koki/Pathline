@@ -7,6 +7,9 @@ declare global {
 }
 
 function boot(): void {
+  const root = document.documentElement;
+  if (root.getAttribute("data-pathline") === "active") return;
+  root.setAttribute("data-pathline", "active");
   if (window.__pathline__?.active) return;
   window.__pathline__ = { active: true };
   const controller = createController();

@@ -28,6 +28,7 @@ interface Session {
   lastEvaluatedText: string;
   dismissedHash: string | null;
   visible: boolean;
+  committed: boolean;
 }
 
 export interface PathlineController {
@@ -58,6 +59,11 @@ export function createController(deps: ControllerDeps = {}): PathlineController 
 
   const evaluate = (session: Session): void => {
     const text = session.target.getText();
+    if (session.committed) {
+      renderer.hide(session.target);
+      session.visible = false;
+      return;
+    }
     if (text.length < MIN_LENGTH) {
       renderer.hide(session.target);
       session.visible = false;
@@ -81,6 +87,7 @@ export function createController(deps: ControllerDeps = {}): PathlineController 
   };
 
   const scheduleEvaluate = (session: Session, text: string): void => {
+    if (session.committed) return;
     if (!shouldReevaluate(session.lastEvaluatedText, text)) return;
     if (session.timer) clearTimeout(session.timer);
     const vec = score(text);
@@ -100,10 +107,14 @@ export function createController(deps: ControllerDeps = {}): PathlineController 
       lastEvaluatedText: "",
       dismissedHash: null,
       visible: false,
+      committed: false,
     };
 
     disposables.push(
       target.onInput((text) => {
+        if (session.committed && text.trim().length === 0) {
+          session.committed = false;
+        }
         if (session.dismissedHash && hashText(text) !== session.dismissedHash) {
           session.dismissedHash = null;
         }
@@ -125,9 +136,16 @@ export function createController(deps: ControllerDeps = {}): PathlineController 
           const c = provider.provide({ category: top, text });
           if (!(c instanceof Promise)) {
             target.setText(c.body);
+            session.dismissedHash = hashText(c.body);
+            session.lastEvaluatedText = c.body;
+            session.committed = true;
           }
           renderer.hide(target);
           session.visible = false;
+          if (session.timer) {
+            clearTimeout(session.timer);
+            session.timer = null;
+          }
         } else if (action.type === "cycle") {
           session.state.cycle(action.direction);
           const c = provider.provide({ category: session.state.current, text: target.getText() });

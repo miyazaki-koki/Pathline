@@ -34,17 +34,16 @@ describe("InputAdapter (textarea)", () => {
     expect(captured).toBe("x");
   });
 
-  it("IME 変換中 (isComposing) は onInput を抑止", () => {
+  it("IME 変換中の input は流し、compositionend でも追加発火する", () => {
     const t = createInputTarget(el);
     let fired = 0;
     t.onInput(() => fired++);
     el.dispatchEvent(new CompositionEvent("compositionstart"));
     el.value = "へんかん";
     el.dispatchEvent(new Event("input"));
-    expect(fired).toBe(0);
-    el.dispatchEvent(new CompositionEvent("compositionend"));
-    el.dispatchEvent(new Event("input"));
     expect(fired).toBe(1);
+    el.dispatchEvent(new CompositionEvent("compositionend"));
+    expect(fired).toBe(2);
   });
 
   it("blur/focus リスナーが発火", () => {
