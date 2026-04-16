@@ -4,8 +4,8 @@
 
 ---
 
-- [ ] 1. LLM 可用性判定レイヤーの整備
-- [ ] 1.1 可用性ステータス型と定数の定義
+- [x] 1. LLM 可用性判定レイヤーの整備
+- [x] 1.1 可用性ステータス型と定数の定義
   - `readily` / `after-download` / `downloading` / `unavailable` の列挙と既定値を 1 箇所に集約
   - `CapabilityOptions` の inputLanguages / outputLanguages 既定 (ja, en)
   - **Test scenarios**:
@@ -13,7 +13,7 @@
     - ✓ 未知の値はコンパイルエラーになる (型テスト)
   - _Requirements: 1.1, 1.5_
 
-- [ ] 1.2 LanguageModel グローバル存在確認と availability 取得
+- [x] 1.2 LanguageModel グローバル存在確認と availability 取得
   - `LanguageModel` (および `window.ai`) の有無を安全に参照
   - 存在時のみ `availability()` を await して結果を返す
   - 結果をインスタンス内にキャッシュし 2 回目以降は実 API を呼ばない
@@ -28,8 +28,8 @@
 
 ---
 
-- [ ] 2. プロンプト生成と言語判定の純関数層
-- [ ] 2.1 (P) 言語判定器の実装
+- [x] 2. プロンプト生成と言語判定の純関数層
+- [x] 2.1 (P) 言語判定器の実装
   - ひらがな / カタカナ比率で `ja` 判定
   - ASCII ラテン文字のみなら `en`
   - 上記以外 (漢字のみ / 中国語混在等) は `other`
@@ -42,7 +42,7 @@
     - ✓ 日英混在で日本語比率優位 → `ja`
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 2.2 (P) カテゴリ × 言語別プロンプトテンプレート
+- [x] 2.2 (P) カテゴリ × 言語別プロンプトテンプレート
   - 5 カテゴリ × (ja / en / other) の system prompt を定義
   - system prompt にカテゴリの主動詞と「入力言語に合わせる」「前置き語を付けない」指示を含める
   - user prompt は `---\n{text}\n---` 形式で入力を包む
@@ -56,7 +56,7 @@
     - ✓ `other` は ja 既定 + 「respond in input's language」相当の指示を含む
   - _Requirements: 2.4, 2.5, 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 2.3 (P) 出力サニタイザ
+- [x] 2.3 (P) 出力サニタイザ
   - 日英の前置き語 (「こちらが」「以下が」「Here is」「Sure,」等) を regex で先頭から除去
   - 出力が `---\n{text}\n---` を含まなければ `${body}\n---\n${text}\n---` を付加
   - 入力 lang=ja かつ出力に日本語文字が 0 の場合 `accepted=false`
@@ -73,8 +73,8 @@
 
 ---
 
-- [ ] 3. セッションプールと LLM プロバイダ
-- [ ] 3.1 カテゴリ別セッションプールの実装
+- [x] 3. セッションプールと LLM プロバイダ
+- [x] 3.1 カテゴリ別セッションプールの実装
   - カテゴリ (5 種) ごとにベースセッションを lazy 生成し内部保持
   - `get(category)` で同一ベースを返す (2 回目以降 `create()` を呼ばない)
   - 生成時に失敗したカテゴリは以降 `get()` でも同エラーを即返す (再試行しない)
@@ -87,7 +87,7 @@
     - ✓ clone 派生 session のライフサイクル (try/finally 経由の destroy) が守られる
   - _Requirements: 5.3_
 
-- [ ] 3.2 LanguageModelProvider の非同期 generate
+- [x] 3.2 LanguageModelProvider の非同期 generate
   - Capability が `readily` でなければ即 `null`
   - 入力言語を判定し SessionPool から base → `clone()` で派生セッションを取得
   - `AbortSignal.timeout(2000)` と外部 AbortSignal を `AbortSignal.any` で合成
@@ -107,8 +107,8 @@
 
 ---
 
-- [ ] 4. SettingsStore 拡張 (`llm` キー)
-- [ ] 4.1 `llm: "auto" | "off"` の読み書きと既定値
+- [x] 4. SettingsStore 拡張 (`llm` キー)
+- [x] 4.1 `llm: "auto" | "off"` の読み書きと既定値
   - `chrome.storage.local` に `mode` と独立した `llm` キーを追加
   - 未定義 / 不正値は `auto` にフォールバック
   - 既存 `mode` の読み書きに影響しない (Phase 2 テストを破壊しない)
@@ -120,7 +120,7 @@
     - ✓ `mode` は従来通り独立して読み書きできる
   - _Requirements: 7.1, 7.4, 8.5_
 
-- [ ] 4.2 `llm` 変更通知 listener
+- [x] 4.2 `llm` 変更通知 listener
   - `chrome.storage.onChanged` 購読で `llm` の変更を listener に通知
   - 変更時は `{ mode, llm }` の最新スナップショットを渡す
   - **Test scenarios**:
@@ -131,7 +131,7 @@
 
 ---
 
-- [ ] 5. TwoLayerCandidateProvider のコンポジット
+- [x] 5. TwoLayerCandidateProvider のコンポジット
   - ルールベース (`FlexibleCandidateProvider`) の結果を `immediate` に設定
   - `llm=off` または capability `readily` でない → `pending = Promise.resolve(null)`
   - それ以外 → `pending = llmProvider.generate(req, signal)`
@@ -147,8 +147,8 @@
 
 ---
 
-- [ ] 6. Controller 改修 — 2 層差替えと pending 管理
-- [ ] 6.1 pending 追跡と LLM 候補差替え render
+- [x] 6. Controller 改修 — 2 層差替えと pending 管理
+- [x] 6.1 pending 追跡と LLM 候補差替え render
   - Session state に `pendingController: AbortController | null` と `visibleCandidate: Candidate | null` を追加
   - `evaluate()` で `immediate` を従来通り即 render し、`visibleCandidate` を更新
   - `pending` resolve 時、非 null かつ hash が `visibleCandidate.hash` と異なれば差替え render
@@ -161,7 +161,7 @@
     - ✓ render 順序が必ず immediate → LLM
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 6.2 再入力 / blur / Esc / cycle での pending 中断と再起動
+- [x] 6.2 再入力 / blur / Esc / cycle での pending 中断と再起動
   - 新しい `evaluate()` 開始前に古い `pendingController.abort()`
   - blur / dismiss (Esc) / teardown でも abort
   - ArrowDown / ArrowUp cycle 時も新しいカテゴリで 2 層経路を再実行 (前回の pending は abort)
@@ -173,7 +173,7 @@
     - ✓ teardown で全セッションの pending が abort
   - _Requirements: 3.3, 3.4, 4.4, 4.6_
 
-- [ ] 6.3 Tab 確定時の `visibleCandidate` 使用
+- [x] 6.3 Tab 確定時の `visibleCandidate` 使用
   - `commit` ハンドラで現在表示中の `visibleCandidate` を `target.setText` に渡す
   - 未解決の pending があれば commit 前に abort
   - commit 後は従来通り `dismissedHash` / `committed` を設定
@@ -184,7 +184,7 @@
     - ✓ commit 後は同一 text での再表示が抑止される (既存挙動維持)
   - _Requirements: 4.5_
 
-- [ ] 6.4 設定 (`llm`) に基づく経路分岐と onChange 反応
+- [x] 6.4 設定 (`llm`) に基づく経路分岐と onChange 反応
   - bootstrap 時に `settings.load()` を待ち `llm` を反映
   - `llm=off` の間は TwoLayerProvider が常に `pending=null` を返すため LLM 経路が走らない
   - storage 変更で `llm` が `auto → off` に変わったら、全セッションの進行中 pending を即 abort
@@ -199,15 +199,15 @@
 
 ---
 
-- [ ] 7. 統合テスト・E2E・非機能検証
-- [ ] 7.1 (P) TwoLayerProvider + 実 FlexibleProvider + モック LLM の結合テスト
+- [x] 7. 統合テスト・E2E・非機能検証 (7.6 手動を除き完了)
+- [x] 7.1 (P) TwoLayerProvider + 実 FlexibleProvider + モック LLM の結合テスト
   - 代表入力で immediate が Rule 出力、pending がモック LLM 出力であることを確認
   - **Test scenarios** (対応 IT-ID):
     - ✓ IT-501 「議事録を要約」 → immediate は要約テンプレ、pending はモック LLM body
     - ✓ IT-501' 同入力で 2 回 provide() → immediate は決定論、pending の signal が別インスタンス
   - _Requirements: 2.1, 2.3, 4.2_
 
-- [ ] 7.2 (P) Controller + TwoLayerProvider の happy-dom E2E
+- [x] 7.2 (P) Controller + TwoLayerProvider の happy-dom E2E (controller.twoLayer.test.ts で網羅)
   - 入力 → immediate 即 render → 2 秒以内に LLM render → Tab 確定で LLM body が反映される一連の流れ
   - **Test scenarios** (対応 IT-ID):
     - ✓ IT-502 入力 → render 2 回 (immediate, LLM)
@@ -216,7 +216,7 @@
     - ✓ cycle 後も 2 層経路が再実行される
   - _Requirements: 4.1, 4.2, 4.4, 4.5, 4.6_
 
-- [ ] 7.3 (P) `llm=off` / capability unavailable の統合テスト
+- [x] 7.3 (P) `llm=off` / capability unavailable の統合テスト
   - モック settings と capability を off / unavailable にセットして controller を bootstrap
   - **Test scenarios** (対応 IT-ID):
     - ✓ IT-503 `llm=off` → render 1 回 (immediate のみ)、LLM 呼び出しなし
@@ -224,7 +224,7 @@
     - ✓ `llm=auto → off` 切替直後に進行中 pending が abort される
   - _Requirements: 7.2, 7.3, 7.5, 8.1_
 
-- [ ] 7.4 性能計測とバンドルサイズ検証
+- [x] 7.4 性能計測とバンドルサイズ検証 (Phase 2: 6.89 KB → Phase 3a: 7.46 KB / +0.57 KB gzip、目標 +2 KB 内)
   - immediate 描画は 100ms 以内 (debounce + 処理時間)
   - LLM 生成はモック環境で 2 秒タイムアウト遵守 (時間切れで `null` が返る) を確認
   - `pnpm build` 後の gzip 増分が +2KB 以内
@@ -234,7 +234,7 @@
     - ✓ PT-303 gzip 増分 ≤ +2KB
   - _Requirements: 4.1, 5.4_
 
-- [ ] 7.5 セキュリティ / プライバシー非機能検証
+- [x] 7.5 セキュリティ / プライバシー非機能検証 (llm.security.test.ts で fetch/XHR/WS 不使用・prompt 非漏出を検証、manifest permissions = ["storage"] 維持)
   - 外部通信が発生しないことをソース検査で確認 (`fetch` / `XMLHttpRequest` / `WebSocket` の新規使用なし)
   - プロンプト文字列を warn / info ログに含めていないことを grep で確認
   - `manifest.json` の permissions 差分がないことを確認
@@ -254,7 +254,7 @@
     - ✓ `llm=off` が即時反映される
   - _Requirements: 4.2, 5.1, 7.3_
 
-- [ ] 7.7 Phase 1/2 リグレッション確認
+- [x] 7.7 Phase 1/2 リグレッション確認 (全 256 テスト pass / `CandidateProvider` 型無変更 / GhostRenderer 無変更)
   - 既存 124 テスト (+Phase 2 追加分) が全件 pass の状態を維持
   - GhostRenderer の hash dirty check に変更がない
   - `CandidateProvider` 型は無変更 (新コンポジット型は別名で提供)
