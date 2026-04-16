@@ -1,4 +1,8 @@
 import { createController } from "../controller/controller";
+import { FlexibleCandidateProvider } from "../core/flexibleProvider";
+import { createChromeLLMStack } from "../core/llm/factory";
+import { createTwoLayerProvider } from "../core/twoLayer/twoLayerProvider";
+import { createSettingsStore, type LLMSetting } from "../settings/settingsStore";
 
 declare global {
   interface Window {
@@ -12,7 +16,26 @@ function boot(): void {
   root.setAttribute("data-pathline", "active");
   if (window.__pathline__?.active) return;
   window.__pathline__ = { active: true };
-  const controller = createController();
+
+  const settings = createSettingsStore();
+  let currentLLM: LLMSetting = "auto";
+  void settings.load().then((s) => {
+    currentLLM = s.llm;
+  });
+  settings.onChange((s) => {
+    currentLLM = s.llm;
+  });
+
+  const rule = new FlexibleCandidateProvider();
+  const llm = createChromeLLMStack();
+  const twoLayer = createTwoLayerProvider({
+    rule,
+    llm: llm.provider,
+    capability: llm.capability,
+    getLLMSetting: () => currentLLM,
+  });
+
+  const controller = createController({ settings, provider: rule, twoLayer });
   controller.bootstrap();
 }
 
