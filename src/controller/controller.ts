@@ -1,4 +1,6 @@
 import { RuleBasedCandidateProvider, type CandidateProvider } from "../core/candidate";
+import { FlexibleCandidateProvider } from "../core/flexibleProvider";
+import { createSettingsStore, type SettingsStore, type Mode } from "../settings/settingsStore";
 import { score } from "../core/scoring";
 import { createStateMachine, type CategoryStateMachine } from "../core/stateMachine";
 import { createDomWatcher, type DomWatcher } from "../dom/domWatcher";
@@ -40,6 +42,11 @@ export interface ControllerDeps {
   readonly watcher?: DomWatcher;
   readonly renderer?: GhostRenderer;
   readonly provider?: CandidateProvider;
+  readonly settings?: SettingsStore;
+}
+
+function providerFor(mode: Mode): CandidateProvider {
+  return mode === "classic" ? new RuleBasedCandidateProvider() : new FlexibleCandidateProvider();
 }
 
 function shouldReevaluate(prev: string, next: string): boolean {
@@ -54,7 +61,9 @@ function shouldReevaluate(prev: string, next: string): boolean {
 export function createController(deps: ControllerDeps = {}): PathlineController {
   const watcher = deps.watcher ?? createDomWatcher();
   const renderer = deps.renderer ?? createGhostRenderer();
-  const provider = deps.provider ?? new RuleBasedCandidateProvider();
+  const settings = deps.settings ?? createSettingsStore();
+  let provider: CandidateProvider = deps.provider ?? new FlexibleCandidateProvider();
+  const providerExplicit = deps.provider !== undefined;
   const sessions = new WeakMap<HTMLElement, Session>();
 
   const evaluate = (session: Session): void => {
@@ -166,6 +175,14 @@ export function createController(deps: ControllerDeps = {}): PathlineController 
 
   return {
     bootstrap(): void {
+      if (!providerExplicit) {
+        void settings.load().then(({ mode }) => {
+          provider = providerFor(mode);
+        });
+        settings.onChange((mode) => {
+          provider = providerFor(mode);
+        });
+      }
       watcher.onAttach((target) => {
         if (sessions.has(target.element)) return;
         sessions.set(target.element, createSession(target));

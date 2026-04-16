@@ -1,0 +1,211 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-1 1`] = `
+"以下の相談内容を特に デプロイ について明確にし、背景と目的を補いつつ、答えやすい質問文に整理してください。
+---
+どうすればデプロイが安定するか相談したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-2 1`] = `
+"以下の相談内容を答えやすい質問文に整理してください。
+---
+認証フローについて質問したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-3 1`] = `
+"以下の相談内容を答えやすい質問文に整理してください。
+---
+このエラーの原因を明確にしたい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-4 1`] = `
+"以下の相談内容を特に スコープ について明確にし、答えやすい質問文に整理してください。
+---
+チームに共有する前に、特にスコープを整理したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-5 1`] = `
+"以下の仕様を特に ユーザー、ユーザー体験の改善 について明確にし、答えやすい質問文に整理してください。
+---
+曖昧な要件「ユーザー体験の改善」を具体化したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot clarify-6 1`] = `
+"以下の相談内容を答えやすい質問文に整理してください。
+---
+複数人で意見が割れている論点を整理したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-1 1`] = `
+"以下の文章を分かりやすく自然な表現に改善してください。
+---
+この文章を自然な表現にしてほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-2 1`] = `
+"以下の文章を特に UserService、エラーメッセージ の表現に注意して、分かりやすく自然な表現に改善してください。
+---
+UserService のエラーメッセージを改善したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-3 1`] = `
+"以下の文章をフォーマルな文体で、分かりやすく自然な表現に改善してください。
+---
+ですます調の説明文を、もう少し読みやすくしたい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-4 1`] = `
+"以下の文章を簡潔な表現で、分かりやすく自然な表現に改善してください。
+---
+簡潔に直したい箇条書きのメモ。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-5 1`] = `
+"以下の文章を意図を保ったまま具体例も補足しつつ、分かりやすく自然な表現に改善してください。
+---
+詳しく丁寧に書き直したい下書き。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot improve-6 1`] = `
+"以下の文章を特に レビューコメント の表現に注意して、分かりやすく自然な表現に改善してください。
+---
+レビューコメントを自然に言い換えたい一文。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-1 1`] = `
+"以下のコードを特に function、return、u.id に焦点を当て、レビューし、問題点と改善案を提示してください。
+---
+function f(){ return users.map(u => u.id) } このコードをレビュー。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-2 1`] = `
+"以下の提案文を特に レビュー に焦点を当て、レビューし、問題点と改善案を提示してください。
+---
+新機能の提案内容をレビューしてほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-3 1`] = `
+"以下の仕様を特に ドキュメント、レビュー に焦点を当て、レビューし、問題点と改善案を提示してください。
+---
+仕様ドキュメントの抜け漏れをレビューしたい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-4 1`] = `
+"以下の内容を特に UserService、リファクタ、レビュー に焦点を当て、レビューし、問題点と改善案を提示してください。
+---
+UserService のリファクタ案をレビューしてほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-5 1`] = `
+"以下の内容を特に レビュー に焦点を当て、重要な論点に絞って、レビューし、問題点と改善案を提示してください。
+---
+PR 本文を簡潔にレビューしてほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot review-6 1`] = `
+"以下の仕様を特に レビュー に焦点を当て、具体例と根拠を示しながら、レビューし、問題点と改善案を提示してください。
+---
+長文の要件定義を詳しくレビューしたい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-1 1`] = `
+"以下の内容を箇条書きで、整理して構造化してください。
+---
+複数行のメモを箇条書きで整理してほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-2 1`] = `
+"以下の内容を表形式で、整理して構造化してください。
+---
+調査結果を表でまとめたい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-3 1`] = `
+"以下の議事録を箇条書きで、整理して構造化してください。
+---
+議事録の内容を階層化して整理したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-4 1`] = `
+"以下の内容を箇条書きで、整理して構造化してください。
+---
+簡潔に箇条書きで整理してほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-5 1`] = `
+"以下の内容を階層を意識しつつ、箇条書きで、整理して構造化してください。
+---
+詳しく構造化したい長文ノート。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot structure-6 1`] = `
+"以下の内容をカテゴリ を軸に、箇条書きで、整理して構造化してください。
+---
+設計メモをカテゴリ別に整理したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-1 1`] = `
+"以下の議事録を特に レビュー を中心に、要約してください。
+---
+本日の議事録。決定事項: 来週までに設計レビュー。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-2 1`] = `
+"以下の内容を要点のみを押さえて、要約してください。
+---
+このコードの挙動を3行で要約してほしい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-3 1`] = `
+"以下の内容を表形式で、要約してください。
+---
+長いメール本文を表で要約したい。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-4 1`] = `
+"以下の内容を箇条書きで、要約してください。
+---
+箇条書きで要点を整理してほしい会議メモ。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-5 1`] = `
+"以下の内容を主要ポイントを網羅的に、要約してください。
+---
+詳しく網羅的にまとめたい調査ノート。
+---"
+`;
+
+exports[`composer snapshots (30 representative inputs) > snapshot summarize-6 1`] = `
+"以下の仕様を特に ドキュメント を中心に、要点のみを押さえて、要約してください。
+---
+仕様ドキュメントの概要を簡潔に。
+---"
+`;
