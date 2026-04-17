@@ -35,6 +35,12 @@ function boot(): void {
     getLLMSetting: () => currentLLM,
   });
 
+  const hasLM = typeof (globalThis as unknown as { LanguageModel?: unknown }).LanguageModel !== "undefined";
+  console.debug("[pathline] LanguageModel global:", hasLM ? "present" : "absent");
+  void llm.capability.detect().then((status) => {
+    console.debug("[pathline] llm capability:", status);
+  });
+
   const controller = createController({ settings, provider: rule, twoLayer });
   controller.bootstrap();
 }
